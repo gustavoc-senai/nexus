@@ -1,0 +1,22 @@
+import { useState, type FormEvent } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, ArrowRight, LoaderCircle } from 'lucide-react'
+import { AuthLayout } from '../../components/layout/AuthLayout'
+import { useAuth } from '../../context/AuthContext'
+import { requestPasswordReset, updatePassword } from '../../services/auth'
+export default function AuthForm({ mode }: { mode: 'login' | 'register' | 'forgot' | 'reset' }) {
+  const { signIn, signUp, user, loading } = useAuth(); const navigate = useNavigate()
+  const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [name, setName] = useState(''); const [show, setShow] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [success, setSuccess] = useState('')
+  const copy = { login: ['Bem-vindo a bordo.', 'Entre na sua conta e continue sua jornada.', 'Entrar na estação'], register: ['Sua jornada começa aqui.', 'Crie sua conta para explorar novas possibilidades.', 'Criar minha conta'], forgot: ['Recupere seu acesso.', 'Enviaremos um link para redefinir sua senha.', 'Enviar link de recuperação'], reset: ['Defina sua nova senha.', 'Escolha uma senha com pelo menos 8 caracteres.', 'Salvar nova senha'] }[mode]
+  if (user && !loading && mode === 'login') return <Navigate to="/dashboard" replace />
+  async function submit(event: FormEvent) {
+    event.preventDefault(); setError(''); setSuccess(''); setBusy(true)
+    try {
+      const result = mode === 'login' ? await signIn(email.trim(), password) : mode === 'register' ? await signUp(email.trim(), password, name.trim()) : mode === 'forgot' ? await requestPasswordReset(email.trim()) : await updatePassword(password)
+      if (result.error) { setError(mode === 'login' ? 'Não foi possível entrar. Confira seus dados e a confirmação do e-mail.' : 'Não foi possível concluir a solicitação. Tente novamente.'); return }
+      if (mode === 'login') navigate('/dashboard'); else setSuccess(mode === 'register' ? 'Cadastro enviado. Confira seu e-mail para confirmar sua conta.' : mode === 'forgot' ? 'Se houver uma conta para este e-mail, você receberá um link de recuperação.' : 'Senha atualizada. Você já pode acessar sua conta.')
+    } catch { setError('Não foi possível conectar ao serviço. Tente novamente.') } finally { setBusy(false) }
+  }
+  return <AuthLayout title={copy[0]} subtitle={copy[1]}><form className="auth-form" onSubmit={submit}>{mode === 'register' && <label>Nome completo<input autoComplete="name" required value={name} onChange={e => setName(e.target.value)} placeholder="Como podemos chamar você?" maxLength={120} /></label>}{mode !== 'reset' && <label>E-mail<input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@exemplo.com" /></label>}{mode !== 'forgot' && <label><span className="field-heading">Senha{mode === 'login' && <Link to="/forgot-password">Esqueceu a senha?</Link>}</span><span className="password-field"><input type={show ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required minLength={mode === 'login' ? 1 : 8} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'login' ? 'Digite sua senha' : 'Pelo menos 8 caracteres'} /><button type="button" aria-label={show ? 'Ocultar senha' : 'Mostrar senha'} onClick={() => setShow(!show)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>}{error && <p role="alert" className="notice error">{error}</p>}{success && <p role="status" className="notice success">{success}</p>}<button className="button primary" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <ArrowRight size={18} />}{busy ? 'Aguarde…' : copy[2]}</button></form><p className="auth-switch">{mode === 'login' ? <>Ainda não faz parte da tripulação? <Link to="/register">Crie sua conta</Link></> : <Link to="/login">Voltar para o acesso</Link>}</p><div className="auth-divider"><span>EXPLORE ANTES DE EMBARCAR</span></div><Link className="button secondary" to="/demo">Acessar demonstração<ArrowUpRightIcon /></Link></AuthLayout>
+}
+function ArrowUpRightIcon() { return <ArrowRight size={16} /> }

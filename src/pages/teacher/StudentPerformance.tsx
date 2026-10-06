@@ -1,0 +1,6 @@
+﻿import { useParams, useOutletContext, Link } from 'react-router-dom'
+import { Target, Activity } from 'lucide-react'
+import { demoStudents } from '../../services/teacher'
+import { PageHeading, Stat, EmptyState } from '../../components/ui/Primitives'
+export default function StudentPerformance() { const { id } = useParams(); const { demo, base } = useOutletContext<{ demo: boolean; base: string }>(); const student = demo ? demoStudents.find(s => s.id === id) : null; if (!student) return <EmptyState title="Aluno não encontrado"><Link to={`${base}/students`}>Voltar para alunos</Link></EmptyState>; return <><PageHeading kicker={student.className} title={student.name} description="Resumo ilustrativo da jornada de aprendizagem." /><div className="stats-grid"><Stat label="Progresso da estação" value={`${student.progress}%`} detail="Setores concluídos" icon={<Activity />} /><Stat label="Precisão" value={`${student.accuracy}%`} detail="Respostas corretas" icon={<Target />} /></div><section className="panel progress-panel"><h2>{student.accuracy < 70 ? 'Uma oportunidade de apoio' : 'Aprendizagem em movimento'}</h2><p>{student.accuracy < 70 ? 'Considere revisar os conceitos de geometria espacial e incentivar novas tentativas.' : 'Incentive a exploração dos próximos setores e a prática dos conceitos aprendidos.'}</p></section></> }
+
