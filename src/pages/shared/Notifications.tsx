@@ -1,0 +1,14 @@
+import { useCallback, useState } from 'react'
+import { Link, useOutletContext } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { useRemote } from '../../hooks/useRemote'
+import { listNotices } from '../../services/notifications'
+import { PageHeading, EmptyState } from '../../components/ui/Primitives'
+import { RemoteState } from '../../components/ui/RemoteState'
+export default function Notifications(){const {base,demo,teacher}=useOutletContext<{base:string;demo:boolean;teacher:boolean}>();return <><PageHeading kicker="SUA CENTRAL DE AVISOS" title="Avisos e novidades" description="Atividades publicadas, mensagens e prazos da sua turma."/>{demo?<EmptyState title="Conecte-se à sua turma"><Link to="/login">Entre para receber avisos reais do professor.</Link></EmptyState>:<NoticeList key={base} base={base} teacher={teacher}/>}</>}
+function NoticeList({base,teacher}:{base:string;teacher:boolean}){
+ const {user}=useAuth(),key=`nexus-notices-${user?.id}`,[read,setRead]=useState<string[]>(()=>{try{const data=JSON.parse(localStorage.getItem(key)??'[]');return Array.isArray(data)?data.filter(v=>typeof v==='string'):[]}catch{return []}}),[unreadOnly,setUnreadOnly]=useState(false),fetcher=useCallback(()=>listNotices(user!.id,teacher),[user,teacher]),remote=useRemote(fetcher,15000)
+ function mark(ids:string[]){setRead(previous=>{const next=[...new Set([...previous,...ids])].slice(-2000);try{localStorage.setItem(key,JSON.stringify(next))}catch{/* Read markers remain available in this session. */}return next})}
+ const all=remote.data??[],visible=all.filter(n=>!unreadOnly||!read.includes(n.id))
+ return <><RemoteState loading={remote.loading} error={remote.error} retry={remote.refresh}/>{!remote.loading&&!remote.error&&<><div className="task-toolbar"><label><input type="checkbox" checked={unreadOnly} onChange={e=>setUnreadOnly(e.target.checked)}/>Somente não lidos ({all.filter(n=>!read.includes(n.id)).length})</label><button className="button secondary" disabled={!all.some(n=>!read.includes(n.id))} onClick={()=>mark(all.map(n=>n.id))}>Marcar todos como lidos</button></div><div className="study-list">{visible.map(n=><article className={`panel study-card notice-card ${n.urgent?'urgent':''}`} key={n.id}><span className="eyebrow">{read.includes(n.id)?'LIDO':'NOVO'}{n.urgent?' · ATENÇÃO AO PRAZO':''}</span><h2>{n.title}</h2><p>{n.description}</p><Link className="text-link" onClick={()=>mark([n.id])} to={base+n.path}>Abrir seção</Link></article>)}</div>{!visible.length&&<EmptyState title="Tudo em dia">Nenhum aviso nesta seleção. Os avisos são atualizados enquanto esta página estiver visível.</EmptyState>}<p className="study-footnote">Até 100 itens recentes por categoria. A marcação de leitura fica salva neste navegador. Marcar como lido não conclui tarefas.</p></>}</>
+}

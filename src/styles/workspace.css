@@ -1,0 +1,29 @@
+/* Shared workspace hierarchy and responsive navigation. */
+.professional-shell .sidebar { padding-top:24px; scrollbar-width:thin; scrollbar-color:#355060 transparent }
+.professional-shell .sidebar nav {display:block;margin-top:20px}
+.nav-section + .nav-section {margin-top:22px}
+.nav-section-label {padding:0 12px 9px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#91aabd}
+.professional-shell .sidebar nav a {display:flex;gap:11px;min-height:42px;margin:3px 0;font-size:12px;border:1px solid transparent;border-radius:8px}
+.professional-shell .sidebar nav a.active {border-color:#37675f;background:linear-gradient(90deg,#1b3d38,#152b30);color:#b2f1df}
+.professional-shell .sidebar nav a>span:not(.nav-count) {flex:1}
+.professional-shell .sidebar-bottom {padding-top:24px}
+.professional-shell .help-card {padding:16px}
+.workspace-shortcuts {margin-bottom:30px}
+.workspace-shortcuts .section-heading {margin-bottom:16px;align-items:end}
+.workspace-shortcuts .eyebrow {color:#83cbbb;font-size:9px}
+.workspace-shortcuts h2 {font-size:21px;line-height:1.4}
+.shortcut-caption {font-size:11px;color:#91aabd}
+.shortcut-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.shortcut-grid>a {position:relative;display:block;padding:21px;background:#122230;border:1px solid #2b4353;border-radius:12px;transition:background .18s,border-color .18s}
+.shortcut-grid>a:hover {background:#19313e;border-color:#639d92}
+.shortcut-icon {display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid #355a59;border-radius:11px;background:#1c383b;color:#9be2d0;margin-bottom:17px}
+.shortcut-arrow {position:absolute;right:18px;top:23px;color:#8aabba}
+.shortcut-grid h3 {font-size:14px;line-height:1.5;margin-bottom:8px;letter-spacing:0}
+.shortcut-grid p {font-size:12px;line-height:1.7;color:#b1c2d0}
+.professional-shell .environment-note {background:transparent;border:0;padding:0;font-size:11px;margin-bottom:20px}
+.professional-shell .mobile-bottom-nav>button {display:grid;justify-items:center;gap:6px;padding:8px 2px;color:#b2c6d3;background:none;border:0;border-radius:7px;font:inherit;font-size:9px;min-height:47px;cursor:pointer}
+.professional-shell .mobile-bottom-nav>button[aria-expanded=true] {background:#1b3833;color:var(--cyan)}
+@media(min-width:761px){.professional-shell .main-content {padding-top:22px}.professional-shell .sidebar-portal{margin-top:22px}}
+@media(max-width:1150px){.shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.workspace-shortcuts{margin-bottom:24px}.shortcut-caption{display:none}.shortcut-grid{gap:10px}.shortcut-grid>a{padding:16px}.shortcut-grid h3{font-size:13px}.shortcut-grid p{font-size:11px}.shortcut-icon{width:36px;height:36px;margin-bottom:12px}.shortcut-arrow{right:12px;top:17px}.workspace-shortcuts h2{font-size:19px}.professional-shell .sidebar nav a{min-height:44px}.professional-shell .sidebar{padding-bottom:30px}}
+@media(prefers-reduced-motion:reduce){.shortcut-grid>a{transition:none}}

@@ -1,0 +1,9 @@
+import { Link, useOutletContext } from 'react-router-dom'
+import { useDemo } from '../../context/LearningContext'
+import { catalog, missionPath } from '../../services/curriculum'
+import { PageHeading, EmptyState } from '../../components/ui/Primitives'
+export default function Review(){
+ const {base}=useOutletContext<{base:string}>(),{attempts,loading}=useDemo(),latest=new Map(attempts.toSorted((a,b)=>a.date.localeCompare(b.date)).map(a=>[a.missionId,a])),review=catalog.flatMap(m=>{const a=latest.get(m.id);return (a?.mistakes??[]).filter(i=>m.questions[i]).map(i=>({m,q:m.questions[i],i}))})
+ if(loading)return <p className="notice" role="status">Preparando sua revisão…</p>
+ return <><PageHeading kicker="APRENDER COM AS TENTATIVAS" title="Minha revisão" description="Questões incorretas na sua tentativa mais recente de cada atividade. Uma nova tentativa atualiza esta lista."/>{review.length?<div className="study-list">{review.map(({m,q,i})=>{const related=catalog.find(other=>other.topic===m.topic&&other.id!==m.id&&other.kind!=='spatial');return <article className="panel study-card" key={`${m.id}-${i}`}><span className="eyebrow">{m.title} · QUESTÃO {i+1}</span><h2>{q.prompt}</h2><details><summary>Entender a resolução</summary><p>{q.explanation}</p></details><div className="study-actions"><Link className="button secondary" to={missionPath(base,m.id)}>Refazer a atividade</Link>{related&&<Link className="button primary" to={missionPath(base,related.id)}>Praticar outros exercícios do assunto</Link>}</div></article>})}</div>:<EmptyState title={attempts.length?'Nenhuma questão pendente de revisão':'Sua revisão começa com a prática'}><p>{attempts.length?'As últimas tentativas não têm erros registrados. Continue explorando novos assuntos.':'Conclua uma atividade. As questões que precisarem de atenção aparecerão aqui.'}</p><Link className="button primary" to={`${base}/learn`}>Explorar trilhas</Link></EmptyState>}</>
+}

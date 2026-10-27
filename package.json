@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types tests/portal-and-geometry.test.mjs",
-    "preview": "vite preview"
+    "test": "node --experimental-strip-types --test tests/portal-and-geometry.test.mjs tests/learning.test.mjs tests/database-security.test.mjs",
+    "preview": "vite preview",
+    "db:prepare": "node --experimental-strip-types scripts/generate-catalog.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
@@ -18,6 +19,7 @@
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -27,4 +29,3 @@
     "vite": "^8.3.0"
   }
 }
-

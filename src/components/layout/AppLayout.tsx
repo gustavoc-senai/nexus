@@ -1,22 +1,49 @@
-﻿import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Map, Rocket, ChartNoAxesCombined, Users, GraduationCap, LogOut, ArrowUpRight, Menu, X, CircleHelp } from 'lucide-react'
-import { useState } from 'react'
-import { Brand } from '../ui/Primitives'
-import { missions } from '../../services/missions'
+import { AccessibilityControls } from '../ui/AccessibilityControls'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { Info, Menu } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { portalNavigation } from './navigation'
+import { Sidebar } from './Sidebar'
+import { Topbar } from './Topbar'
+import { useDemo } from '../../context/LearningContext'
 
 export function AppLayout({ demo = false }: { demo?: boolean }) {
   const { profile, signOut } = useAuth()
+  const learning = useDemo()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const main = useRef<HTMLElement>(null)
+  const location = useLocation()
   const navigate = useNavigate()
   const teacher = !demo && (profile?.role === 'teacher' || profile?.role === 'admin')
   const base = demo ? '/demo' : teacher ? '/teacher' : '/student'
-  const links = teacher ? [{ path: '', label: 'Visão geral', icon: LayoutDashboard }, { path: '/students', label: 'Alunos', icon: Users }, { path: '/missions', label: 'Missões', icon: Rocket }, { path: '/challenges', label: 'Desafios', icon: GraduationCap }, { path: '/statistics', label: 'Estatísticas', icon: ChartNoAxesCombined }] : [{ path: '', label: 'Visão geral', icon: LayoutDashboard }, { path: '/map', label: 'Mapa da estação', icon: Map }, { path: '/missions', label: 'Minhas missões', icon: Rocket }, { path: '/progress', label: 'Meu progresso', icon: ChartNoAxesCombined }]
-  async function exit() { try { if (!demo) await signOut(); navigate('/login') } catch { setError('Não foi possível sair. Tente novamente.') } }
-  return <div className="app-shell"><a className="skip-link" href="#main">Pular para o conteúdo</a><aside className={`sidebar ${open ? 'is-open' : ''}`}><Link to={base} aria-label="Nexus início"><Brand /></Link><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Fechar menu"><X /></button><div className="workspace-label">CENTRO DE CONTROLE<span>01</span></div><nav aria-label="Navegação principal">{links.map(({ path, label, icon: Icon }) => <NavLink end to={base + path} key={path} onClick={() => setOpen(false)}><Icon size={19} />{label}{path === '/missions' && <span className="nav-count">{String(missions.length).padStart(2, '0')}</span>}</NavLink>)}</nav><div className="sidebar-bottom"><div className="help-card"><CircleHelp size={21} /><strong>Uma missão, muitas descobertas.</strong><p>Aprenda no seu ritmo. Cada passo conta.</p><Link to="/login">Central de acesso <ArrowUpRight size={15} /></Link></div><div className="system-status"><span className="status-dot" /> SISTEMAS ONLINE <span>v.1.0</span></div></div></aside>{open && <button className="menu-overlay" aria-label="Fechar navegação" onClick={() => setOpen(false)} />}<div className="workspace"><header className="topbar"><div className="breadcrumb"><button className="menu-toggle icon-button" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu /></button><span>Estação Nexus</span><span>/</span><strong>{teacher ? 'Área do professor' : 'Área do explorador'}</strong></div><div className="topbar-right">{demo && <span className="demo-badge">Demonstração</span>}<span className="avatar">{demo ? teacher ? 'PR' : 'EX' : (profile?.full_name || 'N').slice(0, 2).toUpperCase()}</span><div className="profile-name"><strong>{demo ? teacher ? 'Professor' : 'Explorador' : profile?.full_name || 'Tripulante'}</strong><small>{teacher ? 'Comando da estação' : 'Tripulação Nexus'}</small></div><button className="icon-button" onClick={exit} aria-label="Sair"><LogOut size={18} /></button></div></header><main id="main" className="main-content">{error && <p role="alert" className="notice error">{error}</p>}{demo && <div className="demo-strip"><span>Ambiente de demonstração · dados ilustrativos e progresso local</span></div>}{!demo && <p className="notice training-notice">Catálogo pedagógico de demonstração. As tentativas são salvas apenas neste navegador; turmas e resultados ainda não estão conectados ao banco.</p>}<Outlet context={{ base, teacher, demo }} /></main><footer className="app-footer"><span>ESTAÇÃO NEXUS / Conhecimento que leva você além.</span><span>Explore. Aprenda. Evolua.</span></footer></div></div>
+  const links = portalNavigation(teacher)
+  const relative = location.pathname.slice(base.length)
+  const title = links.find(link => link.path === relative)?.label ?? (relative.startsWith('/practice/') ? 'Prática de matemática' : relative.startsWith('/basic/') ? 'Atividade de matemática' : relative.startsWith('/sector/') ? 'Detalhes da missão' : relative.startsWith('/challenge/') ? 'Desafio em andamento' : relative.startsWith('/result/') ? 'Resultado da missão' : relative.startsWith('/students/') ? 'Desempenho do aluno' : 'Estação Nexus')
+  const quickPaths = teacher ? ['', '/classes', '/tasks', '/chat'] : ['', '/learn', '/tasks', '/chat']
+  const mobileLinks = quickPaths.map(path => links.find(link => link.path === path)!)
+  useEffect(() => { window.scrollTo({ top: 0 }); main.current?.focus({ preventScroll: true }) }, [location.pathname])
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const sidebar = document.getElementById('portal-sidebar')
+    const previousFocus = document.activeElement as HTMLElement | null
+    const controls = () => [...(sidebar?.querySelectorAll<HTMLElement>('a, button:not(:disabled)') ?? [])].filter(element => element.getClientRects().length > 0)
+    controls()[0]?.focus()
+    function keydown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Tab') {
+        const items = controls(); const first = items[0]; const last = items[items.length - 1]
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+      }
+    }
+    document.addEventListener('keydown', keydown)
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', keydown); previousFocus?.focus() }
+  }, [open])
+  async function exit() { if (busy) return; setBusy(true); setError(''); try { if (!demo) await signOut(); navigate('/login') } catch { setError('Não foi possível sair. Tente novamente.') } finally { setBusy(false) } }
+  return <div className="app-shell professional-shell"><a className="skip-link" href="#main">Pular para o conteúdo</a><Sidebar base={base} teacher={teacher} links={links} open={open} close={() => setOpen(false)} />{open && <button className="menu-overlay" aria-label="Fechar navegação" onClick={() => setOpen(false)} />}<div className="workspace"><Topbar base={base} title={title} teacher={teacher} name={demo ? 'Explorador' : profile?.full_name || 'Tripulante'} demo={demo} open={open} toggle={() => setOpen(true)} exit={() => void exit()} busy={busy} /><main ref={main} tabIndex={-1} id="main" className="main-content">{error && <p role="alert" className="notice error">{error}</p>}<AccessibilityControls /><div className="environment-note"><Info size={14} /><span>{demo ? 'Demonstração de aprendizagem · seu progresso fica neste navegador.' : teacher ? 'Portal do professor · gestão de turmas e aprendizagem matemática.' : learning.loading ? 'Conectando seu progresso…' : learning.online ? 'Progresso conectado à sua conta.' : 'Progresso ainda não conectado · rascunhos preservados neste navegador.'}</span></div>{!teacher && !demo && learning.error && <div className="notice error" role="alert"><span>{learning.error}</span><button className="button secondary" type="button" disabled={learning.loading} onClick={learning.retry}>Tentar novamente</button></div>}<Suspense fallback={<p className="notice" role="status">Carregando a seção…</p>}><Outlet context={{ base, teacher, demo }} /></Suspense></main><footer className="app-footer"><span>ESTAÇÃO NEXUS · Matemática em movimento.</span><span>Explore. Aprenda. Evolua.</span></footer></div><nav className="mobile-bottom-nav" aria-label="Navegação rápida">{mobileLinks.map(({ path, shortLabel, icon: Icon }) => <NavLink key={path} end={!path} to={base + path}><Icon size={19} /><span>{shortLabel}</span></NavLink>)}<button type="button" aria-label="Abrir todas as seções" aria-expanded={open} aria-controls="portal-sidebar" onClick={() => setOpen(true)}><Menu size={19}/><span>Mais</span></button></nav></div>
 }
-
-
-
-

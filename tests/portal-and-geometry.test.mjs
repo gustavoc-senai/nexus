@@ -19,10 +19,16 @@ test('each role redirects to its own portal', () => {
 })
 
 const expected = {
+  modulos: [5**2,7**3,9*4*3,4*5*7,Math.sqrt(150/6),180/(6*5)],
+  reservatorios: [10/2,3*4**2,3*2**2*9,3*4**2*6/3,2.5*1000,192/(3*4**2)],
+  bases: [14/2,(32/4)**2,4*(2*3)*9,4*8*10/2,2*4**2+4*4*6,8**2+4*8*9/2],
+  antenas: [Math.hypot(5,12),Math.sqrt(17**2-8**2),3*5*13,3*5**2+3*5*13,2*3*3**2+2*3*3*7,Math.sqrt(17**2-(16/2)**2)],
+  calibracao: [Math.hypot(3*384/12**2,12/2),12**2+4*12*10/2,Math.sqrt(3*300/(3*12)),6*6**2,40*3**3,54*Math.cbrt(8)**2],
+  expedicao: [(10-2)**3,4*3*5**3/3,60/(3*2**2),(6/2)**3,2*(8*5+8*6+5*6),3*9*(9+Math.hypot(9,12))],
   energia: ['6 faces, 12 arestas e 8 vértices', `${4 ** 3} m³`, `${6 * 3 * 2} m³`, `${6 * 3 ** 2} m²`, 4, 2 * (4 * 3 + 4 * 2 + 3 * 2)],
   hangar: [6 ** 3, 4 * 5 * 6, 2 * 1.5 * 1 * 1000, 3 * 2 ** 2 * 5, 4 * 3 / 2 * 5, 4 * 3 * 3 ** 3 / 3],
   oficina: [6 * 4 ** 2, 2 * (2 * 3 + 2 * 5 + 3 * 5), 2 * 3 * 2 * 4, 4 * 3 * 2 ** 2, 3 * 2 * 5, 5 * 3 ** 2],
-  navegacao: [`${12 * 5} m³`, `${6 ** 2 * 4 / 3} m³`, String(5 + 5 - 2), `${6 ** 2 + 4 * 6 * 5 / 2} m²`, 96 / 12, 3 * 80 / 48],
+  navegacao: [`${12 * 5} m³`, `${6 ** 2 * 4 / 3} m³`, String(5 + 5 - 2), `${6 ** 2 + 4 * 6 * 5 / 2} m²`, 96 / 12, 3 * 80 / 48, 12/2, 8**2, 4*6*10, Math.sqrt(13**2-5**2), 10**2+4*10*13/2, 6**2*10/3],
   comunicacao: [`${3 ** 2 * 8}π m³`, `${2 * 2 ** 2 + 2 * 2 * 5}π m²`, `${3 ** 2 * 4 / 3}π m³`, `${3 * 5}π m²`, 450 / (3 * 5 ** 2), Math.hypot(9, 12)],
   suporte: [`${4 * 3 ** 3 / 3}π m³`, `${4 * 5 ** 2}π m²`, `${2 * 3 ** 3 / 3}π m³`, `${4 * (6 / 2) ** 2}π m²`, Math.sqrt(64 / 4), 3 * 3 * 2 ** 2],
   observatorio: [Math.hypot(3, 4, 12), 6 * 6 ** 2, 3 * (13 ** 2 - 12 ** 2) * 12 / 3, 10 ** 2 * Math.sqrt(13 ** 2 - 5 ** 2) / 3, 2 * Math.cbrt(256 / 4), 3 * 6 * (Math.hypot(6, 8) + 6)],
@@ -30,16 +36,16 @@ const expected = {
   doca: [8 * 3 ** 3, 24 * 5 ** 2, 2 * 3 * 2 * (96 / (3 * 2 ** 2)), (4 + 2 * 0.5) ** 3 - 4 ** 3, (36000 / 1000) / (3 * (4 / 2) ** 2), 4 * Math.sqrt(3 * 144 / 12)],
 }
 
-test('expanded curriculum has 9 sectors, 54 challenges and 3 sectors per level', () => {
-  assert.equal(missions.length, 9)
-  assert.equal(missions.reduce((sum, m) => sum + m.questions.length, 0), 54)
-  assert.equal(new Set(missions.map(m => m.id)).size, 9)
-  for (const level of ['easy', 'intermediate', 'hard']) assert.equal(missions.filter(m => m.difficulty === level).length, 3)
-  assert.deepEqual(missions.map(m => m.difficulty), ['easy', 'easy', 'easy', 'intermediate', 'intermediate', 'intermediate', 'hard', 'hard', 'hard'])
+test('expanded curriculum has 15 sectors, 96 challenges and 5 sectors per level', () => {
+  assert.equal(missions.length, 15)
+  assert.equal(missions.reduce((sum, m) => sum + m.questions.length, 0), 96)
+  assert.equal(new Set(missions.map(m => m.id)).size, 15)
+  for (const level of ['easy', 'intermediate', 'hard']) assert.equal(missions.filter(m => m.difficulty === level).length, 5)
+  assert.deepEqual(missions.slice(0,9).map(m => m.difficulty), ['easy', 'easy', 'easy', 'intermediate', 'intermediate', 'intermediate', 'hard', 'hard', 'hard'])
 })
 for (const mission of missions) {
   test(`${mission.title}: correct calculations and complete visual support`, () => {
-    assert.equal(mission.questions.length, 6)
+    assert.equal(mission.questions.length, expected[mission.id].length)
     for (const [i, question] of mission.questions.entries()) {
       if (question.numericAnswer !== undefined) {
         assert.equal(question.numericAnswer, expected[mission.id][i])

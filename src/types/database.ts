@@ -2,4 +2,5 @@ export interface Solid { shape: 'cube' | 'prism' | 'cylinder' | 'cone' | 'pyrami
 export type Difficulty = 'easy' | 'intermediate' | 'hard'
 export interface Question { prompt: string; options: string[]; answer: number; explanation: string; solid: Solid; numericAnswer?: number; unit?: string }
 export interface Mission { id: string; title: string; subject: string; difficulty: Difficulty; description: string; icon: 'energy' | 'navigation' | 'communication' | 'life'; objectives: string[]; formulas: string[]; questions: Question[] }
-export interface Attempt { missionId: string; correct: number; total: number; date: string }
+export interface Attempt { id?: string; missionId: string; correct: number; total: number; date: string; mistakes?: number[]; hintsUsed?: number | null; hintsByQuestion?: number[] | null }
+export interface MissionDraft { step: number; answer: number | null; numericInput: string; notes: string; checked: boolean; correct: number; mistakes: number[]; responses: (number | null)[]; hints: number; hintsByQuestion?: number[]; updatedAt: string; requestId?: string }

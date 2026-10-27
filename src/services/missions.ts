@@ -1,4 +1,5 @@
-﻿import type { Mission } from '../types/database'
+import { practiceMissions } from './practiceMissions.ts'
+import type { Mission } from '../types/database'
 import { additionalMissions, foundationExtras } from './geometryCatalog.ts'
 
 const foundationMissions: Mission[] = [
@@ -18,7 +19,7 @@ const foundationMissions: Mission[] = [
     id: 'navegacao', difficulty: 'intermediate', title: 'Centro de navegação', subject: 'Prismas e pirâmides',
     description: 'Modele os compartimentos de navegação com prismas e pirâmides.', icon: 'navigation',
     objectives: ['Comparar prismas e pirâmides.', 'Aplicar a relação de Euler em poliedros convexos.', 'Calcular volumes e a área total de uma pirâmide.'],
-    formulas: ['Prisma: V = A da base × h', 'Pirâmide: V = (A da base × h) / 3', 'Poliedros convexos: vértices − arestas + faces = 2'],
+    formulas: ['Base regular: Aᵦ = perímetro × apótema da base / 2', 'Prisma reto: Aₗ = perímetro × h', 'Pirâmide regular: aₗ² = h² + aᵦ²; Aₗ = perímetro × aₗ / 2; Aₜ = Aᵦ + Aₗ', 'Prisma: V = A da base × h', 'Pirâmide: V = (A da base × h) / 3', 'Poliedros convexos: vértices − arestas + faces = 2'],
     questions: [
       { prompt: 'Um compartimento tem formato de prisma triangular. Sua base tem área de 12 m² e a distância entre as bases é 5 m. Qual é seu volume?', options: ['20 m³', '30 m³', '60 m³', '120 m³'], answer: 2, explanation: 'O volume de um prisma é V = A da base × h. Assim, V = 12 × 5 = 60 m³. A altura é a distância perpendicular entre as bases.', solid: { shape: 'prism', label: 'Prisma triangular', dimensions: ['A da base = 12 m²', 'h = 5 m'] } },
       { prompt: 'Uma pirâmide tem base quadrada de lado 6 m e altura perpendicular de 4 m. Qual é seu volume?', options: ['24 m³', '48 m³', '72 m³', '144 m³'], answer: 1, explanation: 'A da base = 6² = 36 m². O volume da pirâmide é V = (36 × 4) / 3 = 48 m³. A altura perpendicular não é a altura inclinada de uma face.', solid: { shape: 'pyramid', label: 'Pirâmide de base quadrada', dimensions: ['lado da base = 6 m', 'h = 4 m'] } },
@@ -52,6 +53,9 @@ const foundationMissions: Mission[] = [
   },
 ]
 
-export const missions: Mission[] = [...foundationMissions.map(mission => ({ ...mission, questions: [...mission.questions, ...foundationExtras[mission.id]] })), ...additionalMissions].sort((a, b) => ({ easy: 0, intermediate: 1, hard: 2 }[a.difficulty] - { easy: 0, intermediate: 1, hard: 2 }[b.difficulty]))
+const originalMissions: Mission[] = [...foundationMissions.map(mission => ({ ...mission, questions: [...mission.questions, ...foundationExtras[mission.id]] })), ...additionalMissions].sort((a, b) => ({ easy: 0, intermediate: 1, hard: 2 }[a.difficulty] - { easy: 0, intermediate: 1, hard: 2 }[b.difficulty]))
 
 
+
+// Keep existing positions and prerequisites stable when extending the curriculum.
+export const missions: Mission[] = [...originalMissions, ...practiceMissions]

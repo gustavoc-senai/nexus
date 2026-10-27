@@ -1,7 +1,8 @@
-import { useDemo } from '../context/DemoContext'
+import { useDemo } from '../context/LearningContext'
 import { missions } from '../services/missions'
 export function useMissionProgress() {
-  const { attempts } = useDemo()
+  const { attempts: allAttempts } = useDemo()
+  const attempts = allAttempts.filter(a=>missions.some(m=>m.id===a.missionId))
   const completed = new Set(attempts.filter(a => a.correct / a.total >= 0.6).map(a => a.missionId))
   const correct = attempts.reduce((sum, a) => sum + a.correct, 0)
   const total = attempts.reduce((sum, a) => sum + a.total, 0)

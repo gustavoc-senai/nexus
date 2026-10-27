@@ -1,0 +1,30 @@
+import { useState, type FormEvent } from 'react'
+import { useOutletContext } from 'react-router-dom'
+import { assignedQuestions, listClasses, joinClass, findClassByCode, type ClassPreview, answerAssignedQuestion, type AssignedQuestion } from '../../services/classroom'
+import { useRemote } from '../../hooks/useRemote'
+import { PageHeading, EmptyState } from '../../components/ui/Primitives'
+import { RemoteState } from '../../components/ui/RemoteState'
+import { DifficultyBadge } from '../../components/ui/DifficultyBadge'
+import { SolidDiagram } from '../../components/ui/SolidDiagram'
+import { parseNumericAnswer } from '../../lib/geometryAnswers'
+const fetchClassroom = async () => ({ classes: await listClasses(), questions: await assignedQuestions() })
+export default function Classroom() {
+  const { demo } = useOutletContext<{ demo: boolean }>()
+  if (demo) return <EmptyState title="Turmas disponíveis na sua conta">Entre com uma conta de aluno para ingressar em turmas e receber os desafios do seu professor.</EmptyState>
+  return <ConnectedClassroom />
+}
+function ConnectedClassroom() {
+  const remote = useRemote(fetchClassroom, 15000)
+  const [code, setCode] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
+  const [preview, setPreview] = useState<ClassPreview | null>(null)
+  async function search(event: FormEvent) { event.preventDefault(); if (busy) return; setBusy(true); setError(''); setMessage(''); setPreview(null); try { setPreview(await findClassByCode(code)) } catch { setError('Turma não encontrada ou indisponível. Confira o código com seu professor e tente novamente.') } finally { setBusy(false) } }
+  async function join() { if (busy || !preview) return; setBusy(true); setError(''); setMessage(''); try { await joinClass(code); setCode(''); setPreview(null); setMessage('Você entrou na turma. Seu professor já pode ver seu nome na lista de alunos.'); remote.refresh() } catch { setError('Não foi possível ingressar. Confira o código com seu professor e tente novamente.') } finally { setBusy(false) } }
+  return <><PageHeading kicker="APRENDIZAGEM EM EQUIPE" title="Minha turma" description="Receba exercícios de geometria espacial preparados pelo seu professor." /><form onSubmit={event => void search(event)} className="panel management-form"><label htmlFor="join-code">Código fornecido pelo professor</label><div className="inline-form"><input id="join-code" required maxLength={12} minLength={12} pattern="[A-Fa-f0-9]{12}" disabled={busy} autoCapitalize="characters" autoComplete="off" value={code} onChange={e => { setCode(e.target.value.replace(/\s/g, "").toUpperCase()); setPreview(null); setError(""); setMessage("") }} placeholder="Código de 12 caracteres" /><button className="button primary" disabled={busy || !/^[A-F0-9]{12}$/.test(code)}>{busy ? "Aguarde…" : "Buscar minha turma"}</button></div><p>Digite o código para conferir o nome da turma e o professor antes de entrar.</p></form>{preview && <section className="panel class-card class-preview" aria-live="polite"><span className="eyebrow">TURMA ENCONTRADA</span><h2>{preview.name}</h2><p>Professor responsável: {preview.teacher_name || "Professor da turma"}</p>{preview.already_member ? <p className="notice success">Você já faz parte desta turma.</p> : <><p>Ao entrar, seu nome e seus resultados ficarão disponíveis ao professor desta turma.</p><button type="button" className="button primary" disabled={busy} onClick={() => void join()}>{busy ? "Entrando…" : "Confirmar entrada na turma"}</button></>}</section>}<RemoteState loading={remote.loading} error={remote.error} retry={remote.refresh} />{error && <p className="notice error" role="alert">{error}</p>}{message && <p className="notice success" role="status">{message}</p>}<div className="class-tags">{remote.data?.classes.map(c => <span className="badge" key={c.id}>{c.name}</span>)}</div>{!remote.loading && !remote.error && !remote.data?.questions.length && <EmptyState title="Nenhum desafio atribuído">Seu professor pode disponibilizar novos desafios assim que você entrar na turma.</EmptyState>}<div className="question-catalog">{remote.data?.questions.map(q => <AssignedExercise key={q.id} question={q} />)}</div></>
+}
+function AssignedExercise({ question }: { question: AssignedQuestion }) {
+  const [input, setInput] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [result, setResult] = useState<{ correct: boolean; explanation: string } | null>(null)
+  const [requestId, setRequestId] = useState(() => crypto.randomUUID())
+  const answer = parseNumericAnswer(input)
+  async function submit(event: FormEvent) { event.preventDefault(); if (answer === null || busy || result) return; setBusy(true); setError(''); try { setResult(await answerAssignedQuestion(question.id, answer, requestId)) } catch { setError('Não foi possível corrigir e salvar. Tente novamente.') } finally { setBusy(false) } }
+  return <form className="panel challenge" onSubmit={event => void submit(event)}><DifficultyBadge level={question.difficulty} /><h2>{question.title}</h2><div className="question-visual"><p>{question.prompt}</p><SolidDiagram solid={{ shape: question.shape, label: 'Representação do sólido; use as medidas do enunciado.' }} /></div><label className="assigned-answer">Resultado ({question.unit})<input inputMode="decimal" value={input} disabled={!!result || busy} onChange={e => setInput(e.target.value)} /></label>{error && <p className="notice error" role="alert">{error}</p>}{result ? <><div className={`notice ${result.correct ? 'success' : 'error'}`} role="status"><div><strong>{result.correct ? 'Resposta correta.' : 'Revise a resolução.'}</strong><p>{result.explanation}</p></div></div><button type="button" className="button secondary" onClick={() => { setResult(null); setInput(''); setRequestId(crypto.randomUUID()) }}>Praticar novamente</button></> : <button className="button primary" disabled={answer === null || busy}>{busy ? 'Corrigindo…' : 'Confirmar resposta'}</button>}</form>
+}

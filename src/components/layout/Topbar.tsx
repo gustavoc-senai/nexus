@@ -1,0 +1,6 @@
+﻿import { Link } from 'react-router-dom'
+import { ChevronRight, LogOut, Menu, Bell } from 'lucide-react'
+export function Topbar({ base, title, teacher, name, demo, open, toggle, exit, busy }: { base: string; title: string; teacher: boolean; name: string; demo: boolean; open: boolean; toggle: () => void; exit: () => void; busy: boolean }) {
+  const initials = name.split(' ').filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase()
+  return <header className="topbar"><div className="breadcrumb"><button className="menu-toggle icon-button" onClick={toggle} aria-label="Abrir menu" aria-expanded={open} aria-controls="portal-sidebar"><Menu /></button><Link to={base}>{teacher ? 'Portal do professor' : 'Portal do aluno'}</Link><ChevronRight size={13} /><strong>{title}</strong></div><div className="topbar-right"><Link className="icon-button" to={`${base}/notifications`} aria-label="Avisos e novidades"><Bell size={18}/></Link>{demo && <span className="demo-badge">Demonstração</span>}<span className="avatar">{initials}</span><div className="profile-name"><strong>{name}</strong><small>{teacher ? 'Gestão de aprendizagem' : 'Explorador Nexus'}</small></div><button className="icon-button" disabled={busy} onClick={exit} aria-label={busy ? 'Saindo' : 'Sair'}><LogOut size={18} /></button></div></header>
+}
